@@ -548,7 +548,7 @@ function card(L) {
 function sorted(list) {
   var by = $('sortBy').value;
   return list.slice().sort(function (a, b) {
-    if (!!a.gold !== !!b.gold) return a.gold ? -1 : 1;
+    if (by !== 'new' && !!a.gold !== !!b.gold) return a.gold ? -1 : 1;
     if (by === 'new') return String(b.firstSeen || '').localeCompare(String(a.firstSeen || ''));
     if (by === 'price') return (a.price || 9e9) - (b.price || 9e9);
     if (by === 'ski') return ((a.hills && a.hills[0] && a.hills[0].min) || 999) - ((b.hills && b.hills[0] && b.hills[0].min) || 999);
