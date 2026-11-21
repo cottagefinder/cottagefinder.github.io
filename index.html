@@ -56,11 +56,15 @@ a { color: inherit; }
 .summary h1 { font-family: var(--serif); font-size: clamp(30px, 7.4vw, 44px); line-height: 1.08; font-weight: 400; letter-spacing: -.012em; max-width: 18ch; }
 .summary h1 em { font-style: normal; color: var(--brass-2); }
 .summary p { margin: 8px 0 0; color: rgba(238,242,245,.66); font-size: 13.5px; }
-.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 20px; padding: 4px; border-radius: 14px; background: rgba(5,12,18,.38); border: 1px solid rgba(238,242,245,.1); max-width: 520px; backdrop-filter: blur(8px); }
-.seg button { border: 0; background: none; color: rgba(238,242,245,.72); padding: 9px 6px; border-radius: 10px; font-size: 13.5px; font-weight: 500; display: flex; align-items: baseline; justify-content: center; gap: 6px; }
-.seg button b { font-weight: 600; color: #eef2f5; }
-.seg button[aria-selected="true"] { background: #eef2f5; color: #0b1620; }
+.seg-hint { margin: 20px 0 8px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: rgba(238,242,245,.7); }
+.seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; max-width: 520px; }
+.seg button { min-width: 0; cursor: pointer; border: 1px solid rgba(238,242,245,.3); background: rgba(5,12,18,.55); color: rgba(238,242,245,.88); padding: 10px 4px 8px; border-radius: 12px; font: inherit; font-size: 13px; font-weight: 600; line-height: 1.2; display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; backdrop-filter: blur(8px); transition: background .15s ease, border-color .15s ease; }
+.seg button b { font-size: 22px; font-weight: 700; line-height: 1.1; color: #eef2f5; }
+.seg button::after { content: "View \203A"; font-size: 11px; font-weight: 500; opacity: .75; }
+.seg button:hover { border-color: rgba(238,242,245,.65); }
+.seg button[aria-selected="true"] { background: #eef2f5; color: #0b1620; border-color: #eef2f5; box-shadow: 0 8px 20px -10px rgba(0,0,0,.7); }
 .seg button[aria-selected="true"] b { color: #0b1620; }
+.seg button[aria-selected="true"]::after { content: "Showing"; opacity: .6; }
 
 /* ---------- List ---------- */
 .listhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 22px 0 14px; }
@@ -318,6 +322,7 @@ body.locked { position: fixed; left: 0; right: 0; overflow: hidden; }
       <h1 id="headline">Your cottage search</h1>
       <p id="when"></p>
     </div>
+    <p class="seg-hint">Tap a group to see its listings</p>
     <div class="seg" role="tablist" aria-label="Filter listings">
       <button class="stat" data-f="top" role="tab" aria-selected="true">Contenders <b class="num" id="nOk">0</b></button>
       <button class="stat" data-f="ok" role="tab" aria-selected="false">Confirmed <b class="num" id="nInfo">0</b></button>
@@ -527,7 +532,10 @@ function addedET(L) {
   if (!d || isNaN(d)) return '';
   return 'Added ' + d.toLocaleString('en-US', { timeZone: 'America/Toronto', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' ET';
 }
-function isNew(L) { return L.firstSeen && (Date.now() - new Date(L.firstSeen).getTime()) < 48 * 3600e3; }
+function etDay(d) { return new Date(d).toLocaleDateString('en-CA', { timeZone: 'America/Toronto' }); }
+function isNew(L) { return !!L.firstSeen && etDay(L.firstSeen) === etDay(Date.now()); }
+var SHOWN_DAY = etDay(Date.now());
+setInterval(function () { var d = etDay(Date.now()); if (d !== SHOWN_DAY) { SHOWN_DAY = d; try { render(); } catch (e) {} } }, 60000);
 function card(L) {
   var ski = L.hills && L.hills[0], W = L.waterInfo || {};
   var spec = function (v, k) { return '<div><b>' + v + '</b><span>' + k + '</span></div>'; };
