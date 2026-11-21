@@ -86,10 +86,6 @@ a { color: inherit; }
 .addr { font-family: var(--serif); font-size: 22px; line-height: 1.2; letter-spacing: -.005em; }
 .added { display: inline-flex; align-items: center; margin: 8px 0 2px; padding: 4px 11px; border-radius: 999px; font-size: 13px; font-weight: 700; letter-spacing: .01em; color: var(--brass); background: var(--brass-soft); border: 1px solid var(--brass-2); }
 .rhero .added { margin-top: 10px; }
-.card.seen { opacity: .5; }
-.card.seen:hover, .card.seen:focus-visible { opacity: .85; }
-.card.seen .photo img { filter: grayscale(.7); }
-.pill.seen { left: 12px; top: 12px; background: #c0392b; color: #fff; }
 .place { color: var(--muted); font-size: 14px; margin-top: 2px; }
 .price { font-size: 17px; font-weight: 600; margin-top: 10px; letter-spacing: -.005em; }
 .price small { font-weight: 500; font-size: 13px; color: var(--muted); margin-left: 6px; }
@@ -529,21 +525,13 @@ function addedET(L) {
   if (!d || isNaN(d)) return '';
   return 'Added ' + d.toLocaleString('en-US', { timeZone: 'America/Toronto', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' ET';
 }
-function seenMap() { try { return JSON.parse(localStorage.getItem('cfSeen') || '{}'); } catch (e) { return {}; } }
-function seenText(key) { var s = seenMap()[key]; return s ? 'Already opened ' + new Date(s).toLocaleString('en-US', { timeZone: 'America/Toronto', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''; }
-function markSeen(key) {
-  var m = seenMap(); if (m[key]) return;
-  m[key] = new Date().toISOString(); try { localStorage.setItem('cfSeen', JSON.stringify(m)); } catch (e) {}
-  var c = document.querySelector('.card[data-key="' + (window.CSS && CSS.escape ? CSS.escape(key) : key) + '"]');
-  if (c) { c.classList.add('seen'); var n = c.querySelector('.pill.new'); if (n) n.remove(); var p = c.querySelector('.photo'); if (p) p.insertAdjacentHTML('beforeend', '<span class="pill seen">' + esc(seenText(key)) + '</span>'); }
-}
 function isNew(L) { return L.firstSeen && (Date.now() - new Date(L.firstSeen).getTime()) < 48 * 3600e3; }
 function card(L) {
   var ski = L.hills && L.hills[0], W = L.waterInfo || {};
   var spec = function (v, k) { return '<div><b>' + v + '</b><span>' + k + '</span></div>'; };
-  return '<button class="card ' + L.verdict + (L.gold ? ' gold' : '') + (seenMap()[L.key] ? ' seen' : '') + '" data-key="' + esc(L.key) + '" type="button"' + (L.gold ? ' aria-label="Gold mine: ' + esc(L.address || 'listing') + '"' : '') + '>' +
+  return '<button class="card ' + L.verdict + (L.gold ? ' gold' : '') + '" data-key="' + esc(L.key) + '" type="button"' + (L.gold ? ' aria-label="Gold mine: ' + esc(L.address || 'listing') + '"' : '') + '>' +
     '<div class="photo" data-img="' + esc(L.key) + '">' + (IMG[L.key] ? '<img alt="" src="' + IMG[L.key] + '">' : '') +
-      (seenMap()[L.key] ? '<span class="pill seen">' + esc(seenText(L.key)) + '</span>' : (isNew(L) ? '<span class="pill new">New</span>' : '')) + scoreBadge(L) + (L.gold ? goldLabel() : '') + '</div>' +
+      (isNew(L) ? '<span class="pill new">New</span>' : '') + scoreBadge(L) + (L.gold ? goldLabel() : '') + '</div>' +
     '<div class="body"><h3 class="addr">' + esc(L.address || 'Address not found') + '</h3>' +
       '<div class="place">' + esc(place(L)) + '</div>' +
       (addedET(L) ? '<div class="added num">' + esc(addedET(L)) + '</div>' : '') +
@@ -603,7 +591,6 @@ function compassSvg(b) {
 }
 function openReport(key) {
   var L = (DATA.listings || []).filter(function (x) { return x.key === key; })[0]; if (!L) return;
-  markSeen(key);
   var W = L.waterInfo || {}, ski = L.hills && L.hills[0];
   var q = encodeURIComponent(((L.address || '') + ' ' + (L.town || '') + ' Ontario').trim());
   var dig = encodeURIComponent(('"' + (L.address || '') + '" ' + (L.town || '') + ' ' + (L.mls || '') + ' lot size frontage').trim());
