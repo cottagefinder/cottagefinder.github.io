@@ -144,7 +144,9 @@ nav.tabs button.on { color: var(--ink); }
 nav.tabs button.on svg { color: var(--brass); }
 
 /* ---------- Report ---------- */
-.sheet { position: fixed; inset: 0; background: var(--bg); z-index: 6; overflow-y: auto; transform: translateY(100%); transition: transform .32s cubic-bezier(.2,.8,.2,1); }
+html.locked { overscroll-behavior: none; }
+body.locked { position: fixed; left: 0; right: 0; overflow: hidden; }
+.sheet { position: fixed; inset: 0; background: var(--bg); z-index: 6; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; transform: translateY(100%); transition: transform .32s cubic-bezier(.2,.8,.2,1); }
 .sheet.open { transform: none; }
 @media (prefers-reduced-motion: reduce) { .sheet, .card { transition: none; } }
 .rhero { position: relative; height: min(46vh, 380px); min-height: 280px; background: linear-gradient(135deg, #1d3a55, #0f2233); overflow: hidden; }
@@ -375,7 +377,7 @@ document.querySelector('header.top').insertAdjacentHTML('afterbegin', drawScene(
   <section id="v-list">
     <div class="listhead"><h2 id="listTitle">Contenders</h2>
       <div class="sort"><label class="sr" for="sortBy">Sort by</label>
-        <select id="sortBy"><option value="score">Best match</option><option value="new">Newest</option><option value="price">Lowest price</option><option value="ski">Closest to skiing</option><option value="tor">Closest to Toronto</option></select>
+        <select id="sortBy"><option value="new" selected>Newest</option><option value="score">Best match</option><option value="price">Lowest price</option><option value="ski">Closest to skiing</option><option value="tor">Closest to Toronto</option></select>
         <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m3 4.5 3 3 3-3"/></svg></div>
     </div>
     <div class="cards" id="cards"></div>
@@ -662,7 +664,7 @@ function openReport(key) {
       '</div></section>' +
       '<button class="del" id="delBtn" type="button">Remove this listing</button>' +
     '</div>';
-  $('sheet').classList.add('open'); $('sheet').scrollTop = 0; document.body.style.overflow = 'hidden';
+  $('sheet').classList.add('open'); $('sheet').scrollTop = 0; lockBody();
   $('closeBtn').onclick = closeReport;
   $('digJump').onclick = function (e) { e.preventDefault(); $('dig').scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   $('delBtn').onclick = function () { $('delBtn').textContent = 'Removing…'; google.script.run.withSuccessHandler(function (d) { DATA = d; closeReport(); render(); }).removeListing(key); };
@@ -671,7 +673,19 @@ function openReport(key) {
   if (!BIG[key] && L.lat && window.google && google.script) google.script.run.withSuccessHandler(function (r) { if (r && r[key]) { BIG[key] = r[key]; fill(r[key]); } }).getImages([key], true);
   $('closeBtn').focus();
 }
-function closeReport() { $('sheet').classList.remove('open'); document.body.style.overflow = ''; }
+var LOCK_Y = 0;
+function lockBody() {
+  if (document.body.classList.contains('locked')) return;
+  LOCK_Y = window.scrollY || 0;
+  document.body.style.top = -LOCK_Y + 'px';
+  document.body.classList.add('locked'); document.documentElement.classList.add('locked');
+}
+function unlockBody() {
+  if (!document.body.classList.contains('locked')) return;
+  document.body.classList.remove('locked'); document.documentElement.classList.remove('locked');
+  document.body.style.top = ''; window.scrollTo(0, LOCK_Y);
+}
+function closeReport() { $('sheet').classList.remove('open'); unlockBody(); }
 function showView(v) {
   ['list', 'add', 'crit'].forEach(function (x) { $('v-' + x).classList.toggle('hidden', x !== v); });
   document.querySelectorAll('nav.tabs button').forEach(function (b) { b.classList.toggle('on', b.dataset.v === v); });
