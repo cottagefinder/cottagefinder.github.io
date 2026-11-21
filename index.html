@@ -65,6 +65,8 @@ a { color: inherit; }
 .seg button[aria-selected="true"] { background: #eef2f5; color: #0b1620; border-color: #eef2f5; box-shadow: 0 8px 20px -10px rgba(0,0,0,.7); }
 .seg button[aria-selected="true"] b { color: #0b1620; }
 .seg button[aria-selected="true"]::after { content: "Showing"; opacity: .6; }
+.seg button { position: relative; }
+.seg .bub { position: absolute; top: -8px; right: -6px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: #e5484d; color: #fff; font-size: 12.5px; font-weight: 700; line-height: 22px; text-align: center; box-shadow: 0 0 0 2px #0b1620; }
 
 /* ---------- List ---------- */
 .listhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 22px 0 14px; }
@@ -540,7 +542,7 @@ function card(L) {
   var ski = L.hills && L.hills[0], W = L.waterInfo || {};
   var spec = function (v, k) { return '<div><b>' + v + '</b><span>' + k + '</span></div>'; };
   return '<button class="card ' + L.verdict + (L.gold ? ' gold' : '') + '" data-key="' + esc(L.key) + '" type="button"' + (L.gold ? ' aria-label="Gold mine: ' + esc(L.address || 'listing') + '"' : '') + '>' +
-    '<div class="photo" data-img="' + esc(L.key) + '">' + (IMG[L.key] ? '<img alt="" src="' + IMG[L.key] + '">' : '') +
+    '<div class="photo" data-img="' + esc(L.key) + '">' + (L.photo ? '<img alt="" referrerpolicy="no-referrer" src="' + esc(L.photo) + '">' : IMG[L.key] ? '<img alt="" src="' + IMG[L.key] + '">' : '') +
       (isNew(L) ? '<span class="pill new">New</span>' : '') + scoreBadge(L) + (L.gold ? goldLabel() : '') + '</div>' +
     '<div class="body"><h3 class="addr">' + esc(L.address || 'Address not found') + '</h3>' +
       '<div class="place">' + esc(place(L)) + '</div>' +
@@ -565,7 +567,29 @@ function sorted(list) {
   });
 }
 function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+/* Red number bubbles on the group buttons: listings that arrived in (or moved into) a group and haven't been opened on this device since. */
+function inSec(x, f) { return f === 'top' ? x.verdict !== 'fail' : x.verdict === f; }
+function secSig(L) { return ['top', 'ok', 'fail'].filter(function (f) { return inSec(L, f); }).join(','); }
+function ackMap() { try { return JSON.parse(localStorage.getItem('cfAck') || 'null'); } catch (e) { return null; } }
+function saveAck(m) { try { localStorage.setItem('cfAck', JSON.stringify(m)); } catch (e) {} }
+function updateBubbles() {
+  var list = (DATA && DATA.listings) || [], m = ackMap();
+  if (!m) { m = {}; list.forEach(function (L) { m[L.key] = secSig(L); }); saveAck(m); }
+  ['top', 'ok', 'fail'].forEach(function (f) {
+    var n = list.filter(function (L) { return inSec(L, f) && m[L.key] !== secSig(L); }).length;
+    var b = document.querySelector('.seg button[data-f="' + f + '"]'); if (!b) return;
+    var x = b.querySelector('.bub');
+    if (!n) { if (x) x.remove(); return; }
+    if (!x) { x = document.createElement('span'); x.className = 'bub'; b.appendChild(x); }
+    x.textContent = n; x.setAttribute('aria-label', n + ' new');
+  });
+}
+function ackListing(key) {
+  var L = ((DATA && DATA.listings) || []).filter(function (x) { return x.key === key; })[0]; if (!L) return;
+  var m = ackMap() || {}; m[key] = secSig(L); saveAck(m); updateBubbles();
+}
 function render() {
+  try { updateBubbles(); } catch (e) {}
   var L = DATA.listings || [];
   var inF = function (x, f) { return f === 'top' ? x.verdict !== 'fail' : x.verdict === f; };
   var count = function (v) { return L.filter(function (x) { return inF(x, v); }).length; };
@@ -601,6 +625,7 @@ function compassSvg(b) {
 }
 function openReport(key) {
   var L = (DATA.listings || []).filter(function (x) { return x.key === key; })[0]; if (!L) return;
+  ackListing(key);
   var W = L.waterInfo || {}, ski = L.hills && L.hills[0];
   var q = encodeURIComponent(((L.address || '') + ' ' + (L.town || '') + ' Ontario').trim());
   var dig = encodeURIComponent(('"' + (L.address || '') + '" ' + (L.town || '') + ' ' + (L.mls || '') + ' lot size frontage').trim());
@@ -677,8 +702,9 @@ function openReport(key) {
   $('digJump').onclick = function (e) { e.preventDefault(); $('dig').scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   $('delBtn').onclick = function () { $('delBtn').textContent = 'Removing…'; google.script.run.withSuccessHandler(function (d) { DATA = d; closeReport(); render(); }).removeListing(key); };
   var fill = function (src) { var h = $('heroImg'); if (h) h.innerHTML = '<img alt="Satellite view of the property" src="' + src + '">'; };
-  if (BIG[key]) fill(BIG[key]); else if (IMG[key]) fill(IMG[key]);
-  if (!BIG[key] && L.lat && window.google && google.script) google.script.run.withSuccessHandler(function (r) { if (r && r[key]) { BIG[key] = r[key]; fill(r[key]); } }).getImages([key], true);
+  if (L.photo) { var hh = $('heroImg'); if (hh) hh.innerHTML = '<img alt="Listing photo" referrerpolicy="no-referrer" src="' + esc(L.photo) + '">'; }
+  else if (BIG[key]) fill(BIG[key]); else if (IMG[key]) fill(IMG[key]);
+  if (!L.photo && !BIG[key] && L.lat && window.google && google.script) google.script.run.withSuccessHandler(function (r) { if (r && r[key]) { BIG[key] = r[key]; fill(r[key]); } }).getImages([key], true);
   $('closeBtn').focus();
 }
 var LOCK_Y = 0;
