@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="theme-color" content="#0b1620">
+<title>Cottage Finder</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cottages">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Cottage Finder: a private property dossier. Spruce, granite, brass. */
+:root {
+  /* Always navy: a northern lake after sunset, lit by a brass sun. */
+  --bg: #0b1620; --surface: #111f2c; --surface-2: #162737; --ink: #e8edf1; --muted: #94a5b4; --line: #1e3142; --line-2: #2a4155;
+  --navy: #0f2233; --navy-2: #1d3a55; --brass: #d3b06a; --brass-2: #e2c483; --brass-soft: #262214; --brass-ink: #ecd197;
+  --good: #7fc6a0; --warn: #e2b468; --bad: #ec9483;
+  --r-lg: 18px; --r-md: 12px; --r-sm: 8px;
+  --lift: 0 1px 0 rgba(255,255,255,.03) inset, 0 14px 30px -18px rgba(0,0,0,.75);
+  --serif: "Newsreader", "Iowan Old Style", Georgia, serif; --sans: "Hanken Grotesk", "Segoe UI", system-ui, sans-serif;
+  color-scheme: dark;
+}
+html { background: #0b1620; }
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+h1, h2, h3 { margin: 0; font-weight: 500; text-wrap: balance; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; border-radius: 6px; }
+.num { font-variant-numeric: tabular-nums lining-nums; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+.hidden { display: none !important; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- Header: the lake at dusk ---------- */
+.top { position: relative; color: #eef2f5; overflow: hidden; background: linear-gradient(180deg, #0a1521 0%, #11263a 48%, #2a3a4a 88%, #3a4552 100%); }
+.top .scene { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 170px; display: block; pointer-events: none; }
+.top .inner { position: relative; padding-top: 16px; padding-bottom: 150px; }
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.mark { display: flex; align-items: center; gap: 11px; }
+.mark .logo { width: 40px; height: 40px; flex: none; filter: drop-shadow(0 4px 10px rgba(0,0,0,.35)); }
+.mark span { font-family: var(--serif); font-size: 21px; font-weight: 500; letter-spacing: .005em; }
+.refresh { display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(238,242,245,.2); background: rgba(255,255,255,.06); color: #eef2f5; padding: 7px 13px 7px 11px; border-radius: 999px; font-size: 13px; font-weight: 500; backdrop-filter: blur(6px); }
+.refresh:hover { background: rgba(255,255,255,.12); }
+.refresh svg { width: 15px; height: 15px; }
+.summary { margin-top: 28px; }
+.summary h1 { font-family: var(--serif); font-size: clamp(30px, 7.4vw, 44px); line-height: 1.08; font-weight: 400; letter-spacing: -.012em; max-width: 18ch; }
+.summary h1 em { font-style: normal; color: var(--brass-2); }
+.summary p { margin: 8px 0 0; color: rgba(238,242,245,.66); font-size: 13.5px; }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 20px; padding: 4px; border-radius: 14px; background: rgba(5,12,18,.38); border: 1px solid rgba(238,242,245,.1); max-width: 520px; backdrop-filter: blur(8px); }
+.seg button { border: 0; background: none; color: rgba(238,242,245,.72); padding: 9px 6px; border-radius: 10px; font-size: 13.5px; font-weight: 500; display: flex; align-items: baseline; justify-content: center; gap: 6px; }
+.seg button b { font-weight: 600; color: #eef2f5; }
+.seg button[aria-selected="true"] { background: #eef2f5; color: #0b1620; }
+.seg button[aria-selected="true"] b { color: #0b1620; }
+
+/* ---------- List ---------- */
+.listhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 22px 0 14px; }
+.listhead h2 { font-family: var(--serif); font-size: 22px; }
+.sort { position: relative; }
+.sort select { appearance: none; -webkit-appearance: none; border: 1px solid var(--line-2); background: var(--surface); border-radius: 999px; padding: 7px 32px 7px 14px; font-size: 13px; font-weight: 500; color: var(--ink); }
+.sort svg { position: absolute; right: 12px; top: 50%; width: 12px; height: 12px; transform: translateY(-50%); pointer-events: none; color: var(--muted); }
+.cards { display: grid; gap: 18px; grid-template-columns: 1fr; }
+@media (min-width: 760px) { .cards { grid-template-columns: 1fr 1fr; } }
+
+.card { display: block; width: 100%; text-align: left; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; box-shadow: var(--lift); transition: box-shadow .2s ease, border-color .2s ease; }
+.card:hover { border-color: var(--line-2); }
+.photo { position: relative; aspect-ratio: 16 / 9; background: linear-gradient(135deg, #1d3a55, #0f2233); overflow: hidden; }
+.photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,22,19,.28) 0%, rgba(10,22,19,0) 32%, rgba(10,22,19,0) 62%, rgba(10,22,19,.5) 100%); }
+.pill { position: absolute; z-index: 1; display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: rgba(238,242,245,.92); color: #0b1620; backdrop-filter: blur(6px); }
+.pill.new { left: 12px; top: 12px; }
+.score { position: absolute; z-index: 1; right: 12px; top: 12px; width: 46px; height: 46px; }
+.score svg { width: 46px; height: 46px; transform: rotate(-90deg); display: block; }
+.score span { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--serif); font-size: 17px; font-weight: 500; color: #fff; }
+.score .out { font-family: var(--sans); font-size: 11px; font-weight: 600; }
+.body { padding: 16px 18px 18px; }
+.addr { font-family: var(--serif); font-size: 22px; line-height: 1.2; letter-spacing: -.005em; }
+.place { color: var(--muted); font-size: 14px; margin-top: 2px; }
+.price { font-size: 17px; font-weight: 600; margin-top: 10px; letter-spacing: -.005em; }
+.price small { font-weight: 500; font-size: 13px; color: var(--muted); margin-left: 6px; }
+.specs { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 14px; border-top: 1px solid var(--line); }
+.specs div { padding: 11px 0 0; border-left: 1px solid var(--line); padding-left: 12px; min-width: 0; }
+.specs div:first-child { border-left: 0; padding-left: 0; }
+.specs b { display: block; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.specs span { display: block; font-size: 12px; color: var(--muted); margin-top: 1px; }
+.cats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px; }
+.cats div { min-width: 0; }
+.cats span { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); }
+.cats span b { color: var(--ink); font-weight: 600; }
+.cats i { display: block; height: 3px; margin-top: 5px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.cats i em { display: block; height: 100%; background: #7f9bb5; border-radius: 999px; }
+.card.gold .cats i em { background: var(--brass-2); }
+.notes-line { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px; font-size: 13px; color: var(--muted); }
+.notes-line span { display: inline-flex; align-items: center; gap: 6px; }
+.notes-line i { width: 6px; height: 6px; border-radius: 999px; background: var(--line-2); flex: none; }
+.notes-line .warn i { background: var(--warn); } .notes-line .bad i { background: var(--bad); } .notes-line .good i { background: var(--good); }
+.notes-line .bad { color: var(--bad); }
+.card.fail .photo img { filter: grayscale(.85) brightness(.75); }
+.card.fail .addr, .card.fail .price { color: var(--muted); }
+.empty { border: 1px dashed var(--line-2); border-radius: var(--r-lg); padding: 34px 22px; text-align: center; color: var(--muted); background: var(--surface); }
+.empty b { display: block; font-family: var(--serif); font-weight: 500; font-size: 19px; color: var(--ink); margin-bottom: 4px; }
+
+/* ---------- Gold mine: the one loud thing ---------- */
+.card.gold { border-color: var(--brass-2); box-shadow: 0 0 0 1px var(--brass-2), 0 20px 44px -18px rgba(211,176,106,.45); }
+.gold-label { position: absolute; z-index: 1; left: 12px; bottom: 12px; display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px 6px 9px; border-radius: 999px; background: linear-gradient(135deg, #d8b66c, #a8823a); color: #241a06; font-size: 12.5px; font-weight: 700; letter-spacing: .01em; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+.gold-label svg { width: 14px; height: 14px; }
+.card.gold .body { background: linear-gradient(180deg, var(--brass-soft), var(--surface) 70%); }
+.card.gold .specs, .card.gold .specs div { border-color: color-mix(in srgb, var(--brass-2) 35%, var(--line)); }
+
+/* ---------- Panels ---------- */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 22px; box-shadow: var(--lift); margin-top: 24px; max-width: 720px; }
+.panel h2 { font-family: var(--serif); font-size: 26px; }
+.panel > p { color: var(--muted); margin: 6px 0 18px; font-size: 14.5px; max-width: 60ch; }
+textarea { width: 100%; min-height: 180px; padding: 14px; border: 1px solid var(--line-2); border-radius: var(--r-md); background: var(--surface-2); resize: vertical; line-height: 1.5; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 18px; border-radius: 999px; border: 1px solid var(--brass); background: var(--brass); color: #1b1407; font-weight: 600; font-size: 14.5px; }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line-2); }
+.btns { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.msg { margin-top: 12px; font-size: 14px; color: var(--muted); }
+.group { font-family: var(--serif); font-size: 18px; margin: 22px 0 4px; }
+.group:first-of-type { margin-top: 6px; }
+.field { display: grid; grid-template-columns: 1fr 132px; gap: 14px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.field label { font-weight: 600; }
+.field small { display: block; color: var(--muted); font-weight: 400; font-size: 13px; }
+.field input { width: 100%; padding: 9px 12px; border: 1px solid var(--line-2); border-radius: var(--r-sm); background: var(--surface-2); text-align: right; font-variant-numeric: tabular-nums; }
+.field .fixed { text-align: right; font-size: 13px; color: var(--muted); }
+
+/* ---------- Tab bar ---------- */
+nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 4; background: rgba(11,22,32,.86); backdrop-filter: saturate(1.4) blur(14px); -webkit-backdrop-filter: saturate(1.4) blur(14px); border-top: 1px solid var(--line); padding: 6px 0 calc(6px + env(safe-area-inset-bottom)); }
+nav.tabs .wrap { display: grid; grid-template-columns: repeat(3, 1fr); max-width: 520px; }
+nav.tabs button { background: none; border: 0; display: grid; justify-items: center; gap: 3px; padding: 7px 0 5px; color: var(--muted); font-size: 11.5px; font-weight: 600; }
+nav.tabs svg { width: 22px; height: 22px; }
+nav.tabs button.on { color: var(--ink); }
+nav.tabs button.on svg { color: var(--brass); }
+
+/* ---------- Report ---------- */
+.sheet { position: fixed; inset: 0; background: var(--bg); z-index: 6; overflow-y: auto; transform: translateY(100%); transition: transform .32s cubic-bezier(.2,.8,.2,1); }
+.sheet.open { transform: none; }
+@media (prefers-reduced-motion: reduce) { .sheet, .card { transition: none; } }
+.rhero { position: relative; height: min(46vh, 380px); min-height: 280px; background: linear-gradient(135deg, #1d3a55, #0f2233); overflow: hidden; }
+.rhero img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rhero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,18,16,.45) 0%, rgba(8,18,16,0) 30%, rgba(8,18,16,.15) 55%, rgba(8,18,16,.86) 100%); }
+.rhero .nav { position: absolute; z-index: 2; top: 14px; left: 0; right: 0; }
+.back { width: 40px; height: 40px; border-radius: 999px; border: 1px solid rgba(255,255,255,.3); background: rgba(12,26,23,.45); color: #fff; display: grid; place-items: center; backdrop-filter: blur(8px); }
+.rhero .title { position: absolute; z-index: 2; left: 0; right: 0; bottom: 20px; color: #fff; }
+.rhero .title .wrap { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.rhero h2 { font-family: var(--serif); font-size: clamp(28px, 6.4vw, 40px); line-height: 1.08; font-weight: 400; letter-spacing: -.012em; }
+.rhero .where { margin-top: 6px; font-size: 14.5px; color: rgba(255,255,255,.82); }
+.rhero .gold-label { position: static; margin-bottom: 12px; }
+.rhero .score { position: relative; right: auto; top: auto; width: 58px; height: 58px; flex: none; }
+#heroImg { position: absolute; inset: 0; }
+.rhero .score svg { width: 58px; height: 58px; }
+.rhero .score span { font-size: 21px; }
+.report { max-width: 820px; }
+.verdict { margin-top: 18px; padding: 14px 16px; border-radius: var(--r-md); background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--line-2); font-size: 14.5px; }
+.verdict b { font-weight: 600; }
+.verdict.ok { border-left-color: var(--good); } .verdict.info { border-left-color: var(--warn); } .verdict.fail { border-left-color: var(--bad); }
+.verdict.gold { background: var(--brass-soft); border-color: color-mix(in srgb, var(--brass-2) 55%, transparent); border-left-color: var(--brass); color: var(--brass-ink); }
+.acts { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; }
+.acts a { display: grid; justify-items: center; gap: 6px; padding: 13px 4px 11px; text-decoration: none; font-size: 12.5px; font-weight: 600; color: var(--ink); border-left: 1px solid var(--line); text-align: center; }
+.acts a:first-child { border-left: 0; }
+.acts a:hover { background: var(--surface-2); }
+.acts svg { width: 21px; height: 21px; color: var(--brass); }
+.sec { margin-top: 30px; }
+.sec > h3 { font-family: var(--serif); font-size: 23px; margin-bottom: 12px; }
+.sheetcard { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 4px 18px; }
+.spec { display: grid; grid-template-columns: 1fr 1fr; }
+.spec > div { padding: 14px 0; border-bottom: 1px solid var(--line); min-width: 0; }
+.spec > div:nth-child(odd) { padding-right: 14px; }
+.spec > div:nth-child(even) { padding-left: 14px; border-left: 1px solid var(--line); }
+.spec > div:nth-last-child(-n+2) { border-bottom: 0; }
+.spec dt { font-size: 12.5px; color: var(--muted); }
+.spec dd { margin: 2px 0 0; font-size: 17px; font-weight: 600; line-height: 1.25; }
+.spec dd small { display: block; font-size: 12.5px; font-weight: 400; color: var(--muted); margin-top: 2px; }
+.spec .compass { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.checks { padding: 2px 18px; }
+.checks h4 { margin: 14px 0 2px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.crow { display: grid; grid-template-columns: 24px 1fr; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--line); }
+.crow:last-child { border-bottom: 0; }
+.crow svg { width: 20px; height: 20px; margin-top: 1px; }
+.crow .pass { color: var(--good); } .crow .fail { color: var(--bad); } .crow .unk { color: var(--muted); } .crow .part { color: var(--warn); }
+.sec > h3 .of { float: right; font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--muted); margin-top: 8px; }
+.sec > h3 .of b { color: var(--ink); font-size: 15px; }
+.crow .n { font-weight: 600; } .crow .d { color: var(--muted); font-size: 13.5px; }
+.drives { padding: 8px 18px 16px; }
+.drive { display: grid; grid-template-columns: minmax(118px, 200px) 1fr 66px; gap: 12px; align-items: center; padding: 8px 0; font-size: 14px; }
+.drive .t { height: 4px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.drive .f { height: 100%; background: #6f8aa3; border-radius: 999px; }
+.drive .f.hi { background: var(--brass); }
+.drive .m { text-align: right; font-weight: 600; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 0 16px; margin: 0; padding: 4px 0; }
+.kv dt, .kv dd { padding: 11px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; text-align: right; font-weight: 600; }
+.kv dt:nth-last-of-type(1), .kv dd:last-of-type { border-bottom: 0; }
+.src { font-size: 12.5px; color: var(--muted); margin-top: 10px; }
+.timeline { list-style: none; margin: 0; padding: 12px 0; }
+.timeline li { position: relative; padding: 0 0 16px 24px; font-size: 14px; }
+.timeline li::before { content: ""; position: absolute; left: 3px; top: 6px; width: 9px; height: 9px; border-radius: 999px; border: 2px solid var(--brass); background: var(--surface); }
+.timeline li::after { content: ""; position: absolute; left: 8px; top: 18px; bottom: 2px; width: 1px; background: var(--line-2); }
+.timeline li:last-child { padding-bottom: 2px; } .timeline li:last-child::after { display: none; }
+.timeline .when { color: var(--muted); font-size: 13px; }
+.notes { margin: 0; padding: 14px 0 14px 18px; color: var(--ink); font-size: 14px; }
+.notes li { margin-bottom: 6px; } .notes li:last-child { margin-bottom: 0; }
+.links { padding: 0 18px; }
+.links a { display: grid; grid-template-columns: 1fr 18px; gap: 12px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line); text-decoration: none; }
+.links a:last-child { border-bottom: 0; }
+.links b { display: block; font-weight: 600; }
+.links span { display: block; font-size: 13px; color: var(--muted); margin-top: 1px; overflow-wrap: anywhere; }
+.links svg { width: 16px; height: 16px; color: var(--muted); }
+.links a:hover b { color: var(--brass-ink); }
+.del { display: block; margin: 26px 0 40px; background: none; border: 0; padding: 6px 0; color: var(--bad); font-weight: 600; font-size: 14px; }
+.spin { animation: spin 1s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }
+@media (max-width: 420px) {
+  .wrap { padding: 0 16px; }
+  .specs b { font-size: 14px; } .specs div { padding-left: 9px; }
+  .drive { grid-template-columns: 112px 1fr 58px; }
+  .field { grid-template-columns: 1fr 112px; }
+}
+
+.gate { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 24px; background: var(--bg); }
+.gate[hidden] { display: none; }
+.gate form, .gate .box { width: 100%; max-width: 340px; text-align: center; }
+.gate .glogo { width: 64px; height: 64px; border-radius: 16px; display: block; margin: 0 auto 18px; box-shadow: var(--lift); }
+.gate h1 { font-family: var(--serif); font-weight: 500; font-size: 30px; margin: 0 0 6px; }
+.gate p { color: var(--muted); margin: 0 0 20px; }
+.gate input { width: 100%; font: inherit; font-size: 18px; text-align: center; letter-spacing: .04em; padding: 13px 14px; border-radius: var(--r-md); border: 1px solid var(--line-2); background: var(--surface); color: var(--ink); }
+.gate input:focus { outline: 2px solid var(--brass); outline-offset: 2px; }
+.gate button { width: 100%; margin-top: 12px; font: inherit; font-weight: 600; padding: 13px; border-radius: var(--r-md); border: 0; background: var(--brass); color: #1a1408; cursor: pointer; }
+.gate button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.gate .msg { min-height: 1.5em; margin: 12px 0 0; color: var(--bad); }
+.gate .spinner { width: 28px; height: 28px; margin: 0 auto 14px; border-radius: 50%; border: 2.5px solid var(--line-2); border-top-color: var(--brass); animation: gspin .9s linear infinite; }
+@keyframes gspin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .gate .spinner { animation: none; } }
+</style>
+</head>
+<body>
+<div class="gate" id="gate" hidden>
+  <form id="gateForm" autocomplete="off">
+    <svg class="glogo" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+<defs>
+<linearGradient id="gt-sky" x1="0" y1="0" x2="0" y2="30" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#1b3550"/><stop offset="1" stop-color="#5a5a55"/></linearGradient>
+<linearGradient id="gt-lake" x1="0" y1="30" x2="0" y2="48" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#173149"/><stop offset="1" stop-color="#0b1620"/></linearGradient>
+<linearGradient id="gt-sun" x1="0" y1="16" x2="0" y2="30" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#f7dc9c"/><stop offset="1" stop-color="#dba454"/></linearGradient>
+<clipPath id="gt-clip"><rect width="48" height="48" rx="12"/></clipPath>
+</defs>
+<g clip-path="url(#gt-clip)">
+<rect width="48" height="30" fill="url(#gt-sky)"/>
+<circle cx="31" cy="24.5" r="8" fill="url(#gt-sun)"/>
+<path d="M0 30 V26 C7 23.5 12 25.5 18 25 S30 27.2 38 25.6 S45 24.6 48 25.2 V30 Z" fill="#203a52"/>
+<rect y="30" width="48" height="18" fill="url(#gt-lake)"/>
+<path d="M2 30.3 4.6 22.5 7.2 30.3Z M6 30.3 9 19.5 12 30.3Z M37.5 30.3 40.6 20.5 43.7 30.3Z M42.5 30.3 45.2 23.5 48 30.3Z" fill="#0d1b28"/>
+<path d="M13.5 30.3 22 15 30.5 30.3Z" fill="#0d1b28"/>
+<path d="M19.6 30.3 22 25.6 24.4 30.3Z" fill="#f2c26b"/>
+<rect x="21.3" y="20.2" width="1.4" height="2.4" rx=".3" fill="#f2c26b"/>
+<rect x="26" y="33.2" width="10" height="1.3" rx=".65" fill="#ebc57d" opacity=".8"/>
+<rect x="28" y="36.6" width="6" height="1.3" rx=".65" fill="#ebc57d" opacity=".55"/>
+<rect x="29.5" y="40" width="3" height="1.3" rx=".65" fill="#ebc57d" opacity=".35"/>
+<rect x="20" y="32.6" width="4" height="1.1" rx=".55" fill="#f2c26b" opacity=".5"/>
+</g>
+<rect x=".5" y=".5" width="47" height="47" rx="11.5" fill="none" stroke="#d3b06a" stroke-opacity=".6"/>
+</svg>
+
+    <h1>Cottage Finder</h1>
+    <p>Enter the family code to see the listings. You only need to do this once on this device.</p>
+    <label for="gateCode" class="sr-only" style="position:absolute;left:-9999px">Family code</label>
+    <input id="gateCode" name="code" inputmode="text" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Family code">
+    <button type="submit">Open</button>
+    <p class="msg" id="gateMsg" role="alert"></p>
+  </form>
+</div>
+<div class="gate" id="loading">
+  <div class="box"><div class="spinner"></div><p id="loadMsg">Loading the listings</p></div>
+</div>
+<header class="top">
+  
+  <div class="wrap inner">
+    <div class="bar">
+      <div class="mark"><svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
+<defs>
+<linearGradient id="lg-sky" x1="0" y1="0" x2="0" y2="30" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#1b3550"/><stop offset="1" stop-color="#5a5a55"/></linearGradient>
+<linearGradient id="lg-lake" x1="0" y1="30" x2="0" y2="48" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#173149"/><stop offset="1" stop-color="#0b1620"/></linearGradient>
+<linearGradient id="lg-sun" x1="0" y1="16" x2="0" y2="30" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#f7dc9c"/><stop offset="1" stop-color="#dba454"/></linearGradient>
+<clipPath id="lg-clip"><rect width="48" height="48" rx="12"/></clipPath>
+</defs>
+<g clip-path="url(#lg-clip)">
+<rect width="48" height="30" fill="url(#lg-sky)"/>
+<circle cx="31" cy="24.5" r="8" fill="url(#lg-sun)"/>
+<path d="M0 30 V26 C7 23.5 12 25.5 18 25 S30 27.2 38 25.6 S45 24.6 48 25.2 V30 Z" fill="#203a52"/>
+<rect y="30" width="48" height="18" fill="url(#lg-lake)"/>
+<path d="M2 30.3 4.6 22.5 7.2 30.3Z M6 30.3 9 19.5 12 30.3Z M37.5 30.3 40.6 20.5 43.7 30.3Z M42.5 30.3 45.2 23.5 48 30.3Z" fill="#0d1b28"/>
+<path d="M13.5 30.3 22 15 30.5 30.3Z" fill="#0d1b28"/>
+<path d="M19.6 30.3 22 25.6 24.4 30.3Z" fill="#f2c26b"/>
+<rect x="21.3" y="20.2" width="1.4" height="2.4" rx=".3" fill="#f2c26b"/>
+<rect x="26" y="33.2" width="10" height="1.3" rx=".65" fill="#ebc57d" opacity=".8"/>
+<rect x="28" y="36.6" width="6" height="1.3" rx=".65" fill="#ebc57d" opacity=".55"/>
+<rect x="29.5" y="40" width="3" height="1.3" rx=".65" fill="#ebc57d" opacity=".35"/>
+<rect x="20" y="32.6" width="4" height="1.1" rx=".55" fill="#f2c26b" opacity=".5"/>
+</g>
+<rect x=".5" y=".5" width="47" height="47" rx="11.5" fill="none" stroke="#d3b06a" stroke-opacity=".6"/>
+</svg>
+<span>Cottage Finder</span></div>
+      <button class="refresh" id="checkBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg><span>Check now</span></button>
+    </div>
+    <div class="summary">
+      <h1 id="headline">Your cottage search</h1>
+      <p id="when"></p>
+    </div>
+    <div class="seg" role="tablist" aria-label="Filter listings">
+      <button class="stat" data-f="top" role="tab" aria-selected="true">Contenders <b class="num" id="nOk">0</b></button>
+      <button class="stat" data-f="ok" role="tab" aria-selected="false">Confirmed <b class="num" id="nInfo">0</b></button>
+      <button class="stat" data-f="fail" role="tab" aria-selected="false">Ruled out <b class="num" id="nFail">0</b></button>
+    </div>
+  </div>
+</header>
+<script>
+function drawScene() {
+  var W = 1600, H = 260, SH = 205, seed = 7;
+  var rnd = function () { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+  var f = Math.round;
+  function ridge(base, amp, n, ph, bottom) {
+    var pts = [], d, i;
+    for (i = 0; i <= n; i++) pts.push([W * i / n, base - amp * (0.55 + 0.45 * Math.sin(i * 0.9 + ph)) - rnd() * amp * 0.35]);
+    d = 'M0 ' + bottom + 'L0 ' + f(pts[0][1]);
+    for (i = 1; i < pts.length; i++) { var c = (pts[i - 1][0] + pts[i][0]) / 2; d += 'C' + f(c) + ' ' + f(pts[i - 1][1]) + ' ' + f(c) + ' ' + f(pts[i][1]) + ' ' + f(pts[i][0]) + ' ' + f(pts[i][1]); }
+    return { d: d + 'L' + W + ' ' + bottom + 'Z', pts: pts };
+  }
+  function yAt(pts, x) {
+    for (var i = 1; i < pts.length; i++) if (pts[i][0] >= x) { var t = (x - pts[i - 1][0]) / (pts[i][0] - pts[i - 1][0]); t = t * t * (3 - 2 * t); return pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * t; }
+    return pts[pts.length - 1][1];
+  }
+  function pine(x, b, h, w) {
+    var d = 'M' + f(x) + ' ' + f(b - h), L = '', k;
+    for (k = 1; k <= 3; k++) {
+      var y = b - h + h * k / 3 * 0.92, ww = w * (0.35 + 0.65 * k / 3), inn = ww * 0.33;
+      d += 'L' + f(x + ww / 2) + ' ' + f(y) + (k < 3 ? 'L' + f(x + inn / 2) + ' ' + f(y - h * 0.06) : '');
+      L = (k < 3 ? 'L' + f(x - inn / 2) + ' ' + f(y - h * 0.06) : '') + 'L' + f(x - ww / 2) + ' ' + f(y) + L;
+    }
+    return d + 'L' + f(x + w * 0.06) + ' ' + f(b) + 'L' + f(x - w * 0.06) + ' ' + f(b) + L + 'Z';
+  }
+  function forest(pts, x0, x1, hmin, hmax, dens) {
+    var d = '', x = x0;
+    while (x < x1) { var h = hmin + rnd() * (hmax - hmin), w = h * (0.34 + rnd() * 0.1); d += pine(x, yAt(pts, x) + 2, h, w); x += w * dens * (0.55 + rnd() * 0.45); }
+    return d;
+  }
+  var far = ridge(150, 58, 7, 0.4, SH + 2), mid = ridge(186, 30, 9, 2.6, SH + 2), near = ridge(SH, 10, 18, 3.7, SH + 4);
+  var midT = forest(mid.pts, 0, W, 16, 30, 1.25), nearT = forest(near.pts, 0, 650, 26, 54, 0.95) + forest(near.pts, 840, W, 24, 50, 0.95);
+  var cx = 735, cy = f(yAt(near.pts, cx) + 2), sx = 950, sy = 108, g = '', i;
+  [[12, 90, .55], [19, 64, .45], [26, 110, .35], [34, 48, .4], [42, 80, .25], [50, 36, .3]].forEach(function (r) { g += '<rect x="' + f(sx - r[1] / 2 + (rnd() * 12 - 6)) + '" y="' + (SH + r[0]) + '" width="' + r[1] + '" height="1.6" rx=".8" fill="#e8c27a" opacity="' + r[2] + '"/>'; });
+  return '<svg class="scene" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><defs>' +
+    '<radialGradient id="sc-glow" cx="' + sx + '" cy="' + sy + '" r="420" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#e9b867" stop-opacity=".55"/><stop offset=".35" stop-color="#c98f4e" stop-opacity=".18"/><stop offset="1" stop-color="#c98f4e" stop-opacity="0"/></radialGradient>' +
+    '<linearGradient id="sc-lake" x1="0" y1="' + SH + '" x2="0" y2="' + H + '" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#16314a"/><stop offset="1" stop-color="#0b1620"/></linearGradient></defs>' +
+    '<rect width="' + W + '" height="' + H + '" fill="url(#sc-glow)"/><circle cx="' + sx + '" cy="' + sy + '" r="30" fill="#f0c879"/>' +
+    '<path d="' + far.d + '" fill="#24435e" opacity=".9"/><path d="' + mid.d + midT + '" fill="#1a3249"/>' +
+    '<rect y="' + SH + '" width="' + W + '" height="' + (H - SH) + '" fill="url(#sc-lake)"/>' + g +
+    '<rect x="' + (cx - 5) + '" y="' + (SH + 12) + '" width="10" height="1.4" fill="#f2c26b" opacity=".5"/><rect x="' + (cx - 3) + '" y="' + (SH + 18) + '" width="6" height="1.4" fill="#f2c26b" opacity=".35"/>' +
+    '<path d="' + near.d + nearT + '" fill="#0f1f2d"/>' +
+    '<path d="M' + (cx - 26) + ' ' + cy + 'L' + cx + ' ' + (cy - 38) + 'L' + (cx + 26) + ' ' + cy + 'Z" fill="#0a1520"/><path d="M' + (cx - 8) + ' ' + cy + 'L' + cx + ' ' + (cy - 14) + 'L' + (cx + 8) + ' ' + cy + 'Z" fill="#f2c26b"/><rect x="' + (cx - 1.2) + '" y="' + (cy - 30) + '" width="2.4" height="5" fill="#f2c26b" opacity=".8"/>' +
+    '<path d="M' + (cx + 18) + ' ' + (SH + 3) + 'h70v3h-70zM' + (cx + 30) + ' ' + (SH + 5) + 'h2v7h-2zM' + (cx + 60) + ' ' + (SH + 5) + 'h2v7h-2zM' + (cx + 84) + ' ' + (SH + 5) + 'h2v7h-2z" fill="#0a1520"/></svg>';
+}
+document.querySelector('header.top').insertAdjacentHTML('afterbegin', drawScene());
+</script>
+
+<main class="wrap">
+  <section id="v-list">
+    <div class="listhead"><h2 id="listTitle">Contenders</h2>
+      <div class="sort"><label class="sr" for="sortBy">Sort by</label>
+        <select id="sortBy"><option value="score">Best match</option><option value="new">Newest</option><option value="price">Lowest price</option><option value="ski">Closest to skiing</option><option value="tor">Closest to Toronto</option></select>
+        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m3 4.5 3 3 3-3"/></svg></div>
+    </div>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section id="v-add" class="panel hidden">
+    <h2>Add listing details</h2>
+    <p>Copy the details from a listing (lot size, frontage, description) and paste them here. If the listing is already in your list, the details are added and it's re-checked. Otherwise it's added as a new listing.</p>
+    <label for="pasteBox" class="sr">Listing details</label>
+    <textarea id="pasteBox" placeholder="Paste listing details"></textarea>
+    <div class="btns"><button class="btn" id="addBtn" type="button">Check this listing</button><button class="btn ghost" id="clearBtn" type="button">Clear</button></div>
+    <div class="msg" id="addMsg" role="status"></div>
+  </section>
+
+  <section id="v-crit" class="panel hidden">
+    <h2>Criteria</h2>
+    <p>Change any of these and every listing is re-checked against them.</p>
+    <h3 class="group">Must-haves</h3>
+    <div class="field"><label for="minFront">Frontage<small>Minimum, in feet</small></label><input id="minFront" type="number" inputmode="numeric"></div>
+    <div class="field"><label for="minDepth">Lot depth<small>Minimum, in feet</small></label><input id="minDepth" type="number" inputmode="numeric"></div>
+    <div class="field"><label for="maxTorontoHrs">Drive from 132 Hudson Dr<small>Maximum hours, no traffic</small></label><input id="maxTorontoHrs" type="number" step="0.5" inputmode="decimal"></div>
+    <div class="field"><label for="maxPrice">Price<small>Maximum, in dollars</small></label><input id="maxPrice" type="number" step="25000" inputmode="numeric"></div>
+    <div class="field"><label>Waterfront, year-round road<small>Lake or river, maintained road</small></label><span class="fixed">Always</span></div>
+    <h3 class="group">What raises the score</h3>
+    <div class="field"><label for="skiIdealMin">Downhill ski hill within<small>Minutes to Mt St. Louis, Hidden Valley, Sir Sam's, Calabogie, Laurentian, Antoine or Adanac</small></label><input id="skiIdealMin" type="number" step="5" inputmode="numeric"></div>
+    <div class="field"><label for="mainRoadKm">Main road within<small>Kilometres to a highway or regional road</small></label><input id="mainRoadKm" type="number" step="0.5" inputmode="decimal"></div>
+    <div class="field"><label for="townMaxMin">Town within<small>Minutes to groceries, shops and restaurants</small></label><input id="townMaxMin" type="number" step="5" inputmode="numeric"></div>
+    <div class="field"><label for="hospitalMaxMin">Hospital within<small>Minutes</small></label><input id="hospitalMaxMin" type="number" step="5" inputmode="numeric"></div>
+    <div class="field"><label>The property<small>South or west facing, beach, flat ground to the water, no marsh</small></label><span class="fixed">Always</span></div>
+    <div class="field"><label>Summer<small>Boating and water sports, canoeing, swimming, hiking</small></label><span class="fixed">Always</span></div>
+    <div class="field"><label>Winter and town life<small>Cross-country skiing, skating, ice climbing, a quaint town, trails in town</small></label><span class="fixed">Always</span></div>
+    <div class="btns"><button class="btn" id="saveCrit" type="button">Save and re-check</button></div>
+    <div class="msg" id="critMsg" role="status"></div>
+  </section>
+</main>
+
+<nav class="tabs" aria-label="Main">
+  <div class="wrap">
+    <button class="on" data-v="list" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11 12 4l8.5 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/></svg>Listings</button>
+    <button data-v="add" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11v6M9 14h6"/></svg>Add details</button>
+    <button data-v="crit" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>Criteria</button>
+  </div>
+</nav>
+
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Listing report"></div>
+
+<script>
+var DATA = { criteria: {}, listings: [], lastCheck: '' };
+var API = 'https://script.google.com/macros/s/AKfycbzzwR0JqpeehZhg4tORv9oH6zGXWmeb7mvVX91FPAbX293KbBaO5XineAImZXVavgi9/exec';
+var CODE = (function () { try { return localStorage.getItem('cfCode') || ''; } catch (e) { return ''; } })();
+function api(fn, args) {
+  return fetch(API, { method: 'POST', credentials: 'omit', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: fn, args: args || [], k: CODE }) })
+    .then(function (r) { if (!r.ok) throw new Error('The app didn\'t answer. Try again in a minute.'); return r.json(); })
+    .then(function (j) {
+      if (j.ok) return j.data;
+      if (j.error === 'code') { askCode(true); throw new Error('Enter the family code.'); }
+      throw new Error(j.error || 'Something went wrong.');
+    });
+}
+// Same calls the page makes inside Google (google.script.run...), sent over the web instead.
+window.google = { script: { get run() {
+  var ok = function () {}, fail = function (e) { console.error(e); };
+  var p = new Proxy({}, { get: function (t, name) {
+    if (name === 'withSuccessHandler') return function (f) { ok = f; return p; };
+    if (name === 'withFailureHandler') return function (f) { fail = f; return p; };
+    return function () { api(name, [].slice.call(arguments)).then(ok, fail); };
+  } });
+  return p;
+} } };
+function askCode(wrong) {
+  CODE = ''; try { localStorage.removeItem('cfCode'); } catch (e) {}
+  document.getElementById('loading').hidden = true;
+  document.getElementById('gate').hidden = false;
+  document.getElementById('gateMsg').textContent = wrong ? 'That code didn\'t work. Check it and try again.' : '';
+  setTimeout(function () { document.getElementById('gateCode').focus(); }, 50);
+}
+function boot() {
+  if (!CODE) { askCode(false); return; }
+  document.getElementById('gate').hidden = true;
+  document.getElementById('loading').hidden = false;
+  document.getElementById('loadMsg').textContent = 'Loading the listings';
+  api('getData', []).then(function (d) {
+    DATA = d; document.getElementById('loading').hidden = true; render();
+  }, function (err) {
+    if (!CODE) return;
+    document.getElementById('loadMsg').textContent = 'Couldn\'t load the listings. Check your connection, then pull down to refresh.';
+  });
+}
+document.getElementById('gateForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var v = document.getElementById('gateCode').value.trim().toLowerCase().replace(/\s+/g, '');
+  if (!v) { document.getElementById('gateMsg').textContent = 'Type the family code first.'; return; }
+  CODE = v; try { localStorage.setItem('cfCode', v); } catch (e) {}
+  boot();
+});
+
+var IMG = {}, BIG = {}, FILTER = 'top';
+var $ = function (id) { return document.getElementById(id); };
+var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+var money = function (n) { return '$' + Number(n).toLocaleString('en-CA'); };
+var short$ = function (n) { return n >= 1e6 ? '$' + (Math.round(n / 1e4) / 100) + 'M' : '$' + Math.round(n / 1e3) + 'K'; };
+var hm = function (m) { return m >= 60 ? Math.floor(m / 60) + ' h ' + ('0' + (m % 60)).slice(-2) : m + ' min'; };
+var cap = function (s) { s = String(s || ''); return s ? s[0].toUpperCase() + s.slice(1) : s; };
+var CRIT = ['minFront', 'minDepth', 'maxTorontoHrs', 'maxPrice', 'skiIdealMin', 'mainRoadKm', 'townMaxMin', 'hospitalMaxMin'];
+var SVG = function (p, w) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + (w || 1.7) + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>'; };
+var ICON = {
+  listing: SVG('<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10.5" r="1.8"/><path d="m21 16.5-5-5-9 7.5"/>'),
+  search: SVG('<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>'),
+  map: SVG('<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>'),
+  nav: SVG('<path d="m3.5 11 17-7.5-7.5 17-2-7.5z"/>'),
+  star: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2.8 2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg>',
+  pass: SVG('<circle cx="12" cy="12" r="9"/><path d="m8 12.3 2.7 2.7L16 9.6"/>'),
+  fail: SVG('<circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/>'),
+  unk: SVG('<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2-2.4 3.5"/><path d="M12 17h.01"/>'),
+  part: SVG('<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/>'),
+  chev: SVG('<path d="m9 6 6 6-6 6"/>'),
+  back: SVG('<path d="M15 18 9 12l6-6"/>', 2)
+};
+var STROKE = { ok: '#6fc49a', info: '#e2b46a', fail: 'rgba(255,255,255,.35)' };
+var place = function (L) { return [L.lake, L.town].filter(Boolean).join(', '); };
+
+function scoreBadge(L) {
+  var r = 20, c = 2 * Math.PI * r, s = L.verdict === 'fail' ? 0 : Math.max(0, Math.min(100, L.score || 0));
+  return '<div class="score" aria-label="' + (L.verdict === 'fail' ? 'Ruled out' : 'Score ' + s + ' out of 100') + '"><svg viewBox="0 0 46 46"><circle cx="23" cy="23" r="21.5" fill="rgba(12,26,23,.55)"/><circle cx="23" cy="23" r="' + r + '" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="2.5"/>' +
+    '<circle cx="23" cy="23" r="' + r + '" fill="none" stroke="' + (L.gold ? '#e2c483' : STROKE[L.verdict]) + '" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="' + (c * s / 100) + ' ' + c + '"/></svg>' +
+    '<span>' + (L.verdict === 'fail' ? '<em class="out">Out</em>' : s) + '</span></div>';
+}
+function goldLabel() { return '<span class="gold-label">' + ICON.star + 'Gold mine</span>'; }
+function noteLine(L) {
+  var c = [], must = (L.checks || []).filter(function (x) { return x.kind === 'must'; });
+  var short = { front: 'Frontage', depth: 'Depth', water: 'Waterfront', access: 'Year-round access', toronto: 'Drive time', price: 'Price' };
+  must.forEach(function (x) { if (x.status === 'fail') c.push('<span class="bad"><i></i>' + esc(x.id === 'front' && L.front ? 'Frontage ' + L.front + ' ft' : x.id === 'depth' && L.depth ? 'Depth ' + L.depth + ' ft' : short[x.id] || x.name) + '</span>'); });
+  must.forEach(function (x) { if (x.status === 'unk') c.push('<span class="warn"><i></i>' + esc(short[x.id] || x.name) + ' to confirm</span>'); });
+  if (L.wetland && L.wetland.level === 'adjacent') c.push('<span class="bad"><i></i>' + esc(L.wetland.type) + ' beside the lot</span>');
+  if (L.wetland && L.wetland.level === 'nearby') c.push('<span class="warn"><i></i>' + esc(L.wetland.type) + ' within 300 m</span>');
+  if (L.history && L.history.some(function (h) { return h.event === 'Price drop'; })) c.push('<span class="good"><i></i>Price dropped</span>');
+  if (L.lotSrc && L.lotSrc !== 'listing' && L.front) c.push('<span><i></i>Lot measured</span>');
+  if (L.sample) c.push('<span><i></i>Sample listing</span>');
+  return c.length ? '<div class="notes-line">' + c.join('') + '</div>' : '';
+}
+function catStrip(L) {
+  if (!L.cats) return '';
+  return '<div class="cats num">' + ['summer', 'winter', 'town', 'property'].map(function (k) { var g = L.cats[k]; if (!g) return ''; return '<div><span>' + { summer: 'Summer', winter: 'Winter', town: 'Town', property: 'Property' }[k] + '<b>' + Math.round(100 * g.got / g.max) + '</b></span><i><em style="width:' + Math.round(100 * g.got / g.max) + '%"></em></i></div>'; }).join('') + '</div>';
+}
+function isNew(L) { return L.firstSeen && (Date.now() - new Date(L.firstSeen).getTime()) < 48 * 3600e3; }
+function card(L) {
+  var ski = L.hills && L.hills[0], W = L.waterInfo || {};
+  var spec = function (v, k) { return '<div><b>' + v + '</b><span>' + k + '</span></div>'; };
+  return '<button class="card ' + L.verdict + (L.gold ? ' gold' : '') + '" data-key="' + esc(L.key) + '" type="button"' + (L.gold ? ' aria-label="Gold mine: ' + esc(L.address || 'listing') + '"' : '') + '>' +
+    '<div class="photo" data-img="' + esc(L.key) + '">' + (IMG[L.key] ? '<img alt="" src="' + IMG[L.key] + '">' : '') +
+      (isNew(L) ? '<span class="pill new">New</span>' : '') + scoreBadge(L) + (L.gold ? goldLabel() : '') + '</div>' +
+    '<div class="body"><h3 class="addr">' + esc(L.address || 'Address not found') + '</h3>' +
+      '<div class="place">' + esc(place(L)) + '</div>' +
+      (L.price ? '<div class="price num">' + money(L.price) + (L.ppf ? '<small>' + money(L.ppf) + ' per ft</small>' : '') + '</div>' : '') +
+      '<div class="specs num">' +
+        spec(L.front ? (L.lotSrc && L.lotSrc !== 'listing' ? '~' : '') + L.front + ' ft' : '—', 'Frontage') +
+        spec(W.facing ? ({ north: 'N', northeast: 'NE', east: 'E', southeast: 'SE', south: 'S', southwest: 'SW', west: 'W', northwest: 'NW' }[W.facing] || cap(W.facing)) : '—', 'Faces') +
+        spec(L.torMin != null ? hm(L.torMin) : '—', 'From home') +
+        spec(ski ? ski.min + ' min' : '—', 'Skiing') +
+      '</div>' + catStrip(L) + noteLine(L) + '</div></button>';
+}
+function sorted(list) {
+  var by = $('sortBy').value;
+  return list.slice().sort(function (a, b) {
+    if (!!a.gold !== !!b.gold) return a.gold ? -1 : 1;
+    if (by === 'new') return String(b.firstSeen || '').localeCompare(String(a.firstSeen || ''));
+    if (by === 'price') return (a.price || 9e9) - (b.price || 9e9);
+    if (by === 'ski') return ((a.hills && a.hills[0] && a.hills[0].min) || 999) - ((b.hills && b.hills[0] && b.hills[0].min) || 999);
+    if (by === 'tor') return (a.torMin || 999) - (b.torMin || 999);
+    return (b.score || 0) - (a.score || 0);
+  });
+}
+function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+function render() {
+  var L = DATA.listings || [];
+  var inF = function (x, f) { return f === 'top' ? x.verdict !== 'fail' : x.verdict === f; };
+  var count = function (v) { return L.filter(function (x) { return inF(x, v); }).length; };
+  var nGold = L.filter(function (x) { return x.gold; }).length, nTop = count('top');
+  $('nOk').textContent = nTop; $('nInfo').textContent = count('ok'); $('nFail').textContent = count('fail');
+  $('headline').innerHTML = nGold ? plural(nGold, 'gold mine', 'gold mines').replace(/^(\d+) (.*)$/, '$1 <em>$2</em>') + (nTop > nGold ? ' among ' + plural(nTop, 'contender', 'contenders') : ' on the water')
+    : nTop ? plural(nTop, 'contender', 'contenders') + ' on the water' : 'Watching for the right cottage';
+  document.querySelectorAll('.stat').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.f === FILTER ? 'true' : 'false'); });
+  $('listTitle').textContent = { top: 'Contenders', ok: 'Every must-have confirmed', fail: 'Ruled out' }[FILTER];
+  var items = sorted(L.filter(function (x) { return inF(x, FILTER); }));
+  var empty = { top: ['No contenders yet', 'New listings appear here within ten minutes of an alert reaching the inbox.'], ok: ['Nothing fully confirmed yet', 'Contenders still waiting on a detail are under Contenders.'], fail: ['Nothing ruled out', 'Listings that miss a must-have land here.'] }[FILTER];
+  $('cards').innerHTML = items.length ? items.map(card).join('') : '<div class="empty"><b>' + empty[0] + '</b>' + empty[1] + '</div>';
+  $('when').textContent = 'New alerts are checked every 10 minutes' + (DATA.lastCheck ? ', most recently ' + new Date(DATA.lastCheck).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '.');
+  CRIT.forEach(function (k) { if ($(k)) $(k).value = DATA.criteria[k]; });
+  loadThumbs(items.map(function (x) { return x.key; }));
+}
+function loadThumbs(keys) {
+  var need = keys.filter(function (k) { return !IMG[k]; }).slice(0, 20);
+  if (!need.length || !window.google || !google.script) return;
+  google.script.run.withSuccessHandler(function (res) {
+    Object.keys(res || {}).forEach(function (k) {
+      IMG[k] = res[k];
+      document.querySelectorAll('[data-img]').forEach(function (el) { if (el.dataset.img === k && !el.querySelector('img')) el.insertAdjacentHTML('afterbegin', '<img alt="" src="' + res[k] + '">'); });
+    });
+  }).getImages(need, false);
+}
+
+function compassSvg(b) {
+  return '<svg width="48" height="48" viewBox="0 0 54 54" role="img" aria-label="Faces ' + b + ' degrees"><circle cx="27" cy="27" r="24" fill="none" stroke="var(--line-2)" stroke-width="1.5"/>' +
+    '<text x="27" y="12" text-anchor="middle" font-size="8" font-weight="600" fill="var(--muted)">N</text><text x="27" y="48" text-anchor="middle" font-size="8" font-weight="600" fill="var(--muted)">S</text>' +
+    '<text x="45" y="30" text-anchor="middle" font-size="8" font-weight="600" fill="var(--muted)">E</text><text x="9" y="30" text-anchor="middle" font-size="8" font-weight="600" fill="var(--muted)">W</text>' +
+    '<g transform="rotate(' + b + ' 27 27)"><path d="M27 10 L31 27 L23 27 Z" fill="var(--brass)"/><path d="M27 44 L31 27 L23 27 Z" fill="var(--line-2)"/></g></svg>';
+}
+function openReport(key) {
+  var L = (DATA.listings || []).filter(function (x) { return x.key === key; })[0]; if (!L) return;
+  var W = L.waterInfo || {}, ski = L.hills && L.hills[0];
+  var q = encodeURIComponent(((L.address || '') + ' ' + (L.town || '') + ' Ontario').trim());
+  var dig = encodeURIComponent(('"' + (L.address || '') + '" ' + (L.town || '') + ' ' + (L.mls || '') + ' lot size frontage').trim());
+  var mapUrl = L.lat ? 'https://www.google.com/maps/@?api=1&map_action=map&center=' + L.lat + ',' + L.lng + '&zoom=18&basemap=satellite' : 'https://www.google.com/maps/search/?api=1&query=' + q;
+  var dirUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + (L.lat ? L.lat + ',' + L.lng : q);
+  var unk = (L.checks || []).filter(function (c) { return c.kind === 'must' && c.status === 'unk'; }).map(function (c) { return c.name.toLowerCase(); });
+  var fails = (L.checks || []).filter(function (c) { return c.kind === 'must' && c.status === 'fail'; }).map(function (c) { return c.name.toLowerCase() + ' (' + c.detail + ')'; });
+  var vText = L.gold ? '<b>Gold mine.</b> Passes every one of your must-haves and scores ' + L.score + ' out of 100. Call your realtor today.'
+    : { ok: '<b>Passes every must-have.</b> Worth a call to your realtor.', info: '<b>Contender.</b> Nothing rules it out. Still confirming ' + esc(unk.join(', ') || 'a few details') + '. The full listing will show it.', fail: '<b>Ruled out.</b> Misses ' + esc(fails.join(', ') || 'a must-have') + '.' }[L.verdict];
+  var listingUrl = L.url || ('https://www.google.com/search?q=' + encodeURIComponent((L.mls ? L.mls + ' ' : '') + (L.address || '') + ' realtor.ca'));
+  var R = L.research || {};
+  var musts = (L.checks || []).filter(function (c) { return c.kind === 'must'; }), nices = (L.checks || []).filter(function (c) { return c.kind === 'nice'; });
+  var row = function (c) { return '<div class="crow"><span class="' + c.status + '">' + ICON[c.status] + '</span><div><div class="n">' + esc(c.name) + '</div><div class="d">' + esc(c.detail) + '</div></div></div>'; };
+  var trips = [];
+  if (L.torMin != null) trips.push({ n: '132 Hudson Dr (home)', m: L.torMin });
+  (L.hills || []).forEach(function (h, i) { trips.push({ n: h.name, m: h.min, hi: i === 0 }); });
+  if (L.townTrip) trips.push({ n: L.townTrip.name + ' (town)', m: L.townTrip.min });
+  if (L.charmTown && (!L.townTrip || L.charmTown.name !== L.townTrip.name)) trips.push({ n: L.charmTown.name + ' (town)', m: L.charmTown.min });
+  if (L.ice) trips.push({ n: L.ice.name + ' (ice climbing)', m: L.ice.min });
+  if (L.hospital) trips.push({ n: L.hospital.name, m: L.hospital.min });
+  if (L.mainRoad) trips.push({ n: L.mainRoad.name, m: L.mainRoad.min });
+  var maxM = Math.max.apply(null, trips.map(function (t) { return t.m; }).concat([60]));
+  var hist = (L.history || []).map(function (h) { return '<li><div><b>' + esc(h.event) + '</b>, ' + money(h.price) + (h.from ? ' <span class="when">(was ' + money(h.from) + ')</span>' : '') + '</div><div class="when">' + new Date(h.at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }) + '</div></li>'; }).join('');
+  var wl = L.wetland;
+  var dd = function (k, v, s, extra) { return '<div' + (extra ? ' class="' + extra + '"' : '') + '><dt>' + k + '</dt><dd>' + v + (s ? '<small>' + s + '</small>' : '') + '</dd></div>'; };
+  var lotSrc = L.lotSrc ? (L.lotSrc === 'listing' || L.lotSrc === 'listing details' ? 'from the listing' : L.lotSrc) : '';
+  $('sheet').innerHTML =
+    '<div class="rhero"><div id="heroImg"></div>' +
+      '<div class="nav"><div class="wrap"><button class="back" id="closeBtn" aria-label="Back to listings" type="button">' + ICON.back.replace('<svg', '<svg width="20" height="20"') + '</button></div></div>' +
+      '<div class="title"><div class="wrap"><div>' + (L.gold ? goldLabel() : '') + '<h2>' + esc(L.address || 'Listing') + '</h2><div class="where num">' + esc(place(L)) + (L.price ? (place(L) ? ', ' : '') + money(L.price) : '') + '</div></div>' + scoreBadge(L) + '</div></div></div>' +
+    '<div class="wrap report">' +
+      '<div class="verdict ' + (L.gold ? 'gold' : L.verdict) + '">' + vText + '</div>' +
+      '<div class="acts">' +
+        '<a href="' + esc(listingUrl) + '" target="_blank" rel="noopener">' + ICON.listing + 'Listing</a>' +
+        '<a href="#dig" id="digJump">' + ICON.search + 'Dig deeper</a>' +
+        '<a href="' + mapUrl + '" target="_blank" rel="noopener">' + ICON.map + 'Satellite</a>' +
+        '<a href="' + dirUrl + '" target="_blank" rel="noopener">' + ICON.nav + 'Directions</a></div>' +
+      '<section class="sec"><h3>At a glance</h3><dl class="sheetcard spec num">' +
+        dd('Price', L.price ? money(L.price) : '—', L.ppf ? money(L.ppf) + ' per foot of frontage' : (L.mls ? 'MLS® ' + esc(L.mls) : '')) +
+        dd('Lot', L.front ? (L.lotSrc && L.lotSrc !== 'listing' ? '~' : '') + L.front + ' ft frontage' : (L.acres ? L.acres + ' acres' : 'Confirming'), [L.depth ? L.depth + ' ft deep' : '', L.acres && L.front ? L.acres + ' acres' : '', lotSrc].filter(Boolean).join(', ')) +
+        '<div class="compass"><div><dt>Faces</dt><dd>' + esc(W.facing ? cap(W.facing) : '—') + '<small>' + (W.distM != null ? W.distM + ' m to the water' : 'Not measured') + '</small></dd></div>' + (W.bearing != null ? compassSvg(W.bearing) : '') + '</div>' +
+        dd('Water', esc(W.name || L.lake || '—'), W.areaHa ? W.areaHa.toLocaleString('en-CA') + ' hectares' : esc(W.type || '')) +
+        dd('From 132 Hudson Dr', L.torMin != null ? hm(L.torMin) : '—', 'Without traffic' + (L.homeKm ? ', ' + L.homeKm + ' km' : '')) +
+        dd('Nearest skiing', ski ? ski.min + ' min' : '—', esc(ski ? ski.name : '')) +
+        dd('Home', esc([L.beds ? L.beds + ' bed' : null, L.baths ? L.baths + ' bath' : null].filter(Boolean).join(', ') || '—'), L.sqft ? esc(L.sqft) + ' sq ft' : '') +
+        dd('Marsh or wetland', !wl ? '—' : wl.level === 'none' ? 'None nearby' : esc(wl.type), !wl || wl.level === 'none' ? 'Within 300 m' : (wl.level === 'adjacent' ? 'Beside the lot' : 'Within 300 m') + (wl.significant ? ', provincially significant' : '')) +
+        dd('Main road', L.mainRoad ? (L.mainRoad.km != null ? (L.mainRoad.km <= 0.3 ? 'On it' : L.mainRoad.km + ' km') : (L.mainRoad.min <= 0 ? 'On it' : L.mainRoad.min + ' min')) : '—', esc(L.mainRoad ? L.mainRoad.name : '')) +
+        dd('Town', L.serviceTown ? esc(L.serviceTown.name) : (L.townTrip ? esc(L.townTrip.name) : '—'), L.serviceTown ? hm(L.serviceTown.min) + ' drive' : '') +
+      '</dl></section>' +
+      '<section class="sec"><h3>Must-haves</h3><div class="sheetcard checks">' + musts.map(row).join('') + '</div></section>' +
+      ['property', 'summer', 'winter', 'town', 'travel'].map(function (k) { var rows = nices.filter(function (c) { return (c.cat || 'property') === k; }); if (!rows.length) return ''; var g = (L.cats || {})[k]; return '<section class="sec"><h3>' + { property: 'The property', summer: 'Summer', winter: 'Winter', town: 'Town life', travel: 'Getting there' }[k] + (g ? '<span class="of num"><b>' + g.got + '</b> of ' + g.max + '</span>' : '') + '</h3><div class="sheetcard checks">' + rows.map(row).join('') + '</div></section>'; }).join('') +
+      (trips.length ? '<section class="sec"><h3>Drive times</h3><div class="sheetcard drives num">' + trips.map(function (t) { return '<div class="drive"><span>' + esc(t.n) + '</span><div class="t"><div class="f' + (t.hi ? ' hi' : '') + '" style="width:' + Math.max(3, Math.round(100 * t.m / maxM)) + '%"></div></div><span class="m">' + hm(t.m) + '</span></div>'; }).join('') + '</div><div class="src">Google Maps, without traffic.</div></section>' : '') +
+      '<section class="sec"><h3>Land and water</h3><div class="sheetcard"><dl class="kv num">' +
+        '<dt>Water</dt><dd>' + esc(W.name ? W.name + (W.type ? ' (' + W.type.toLowerCase() + ')' : '') : '—') + '</dd>' +
+        (W.areaHa ? '<dt>Size</dt><dd>' + W.areaHa.toLocaleString('en-CA') + ' ha' + (W.shoreKm ? ', ' + W.shoreKm + ' km of shoreline' : '') + '</dd>' : '') +
+        '<dt>Distance to water</dt><dd>' + (W.distM != null ? W.distM + ' m' : '—') + '</dd>' +
+        '<dt>Shoreline faces</dt><dd>' + esc(W.facing ? cap(W.facing) : '—') + '</dd>' +
+        '<dt>Marsh or wetland</dt><dd>' + (!wl ? 'Not checked' : wl.level === 'none' ? 'None within 300 m' : esc(wl.type) + (wl.level === 'adjacent' ? ', beside the lot' : ', within 300 m') + (wl.significant ? ' (provincially significant)' : '')) + '</dd>' +
+        (L.soil ? Object.keys(L.soil).map(function (k) { return '<dt>Soil ' + esc(k.toLowerCase().replace(/_/g, ' ')) + '</dt><dd>' + esc(L.soil[k]) + '</dd>'; }).join('') : '<dt>Soil</dt><dd>No survey data</dd>') +
+      '</dl></div><div class="src">Ontario Hydro Network and Ontario wetland and soil maps (Land Information Ontario), measured from the address location.</div></section>' +
+      (hist ? '<section class="sec"><h3>Price history</h3><div class="sheetcard"><ul class="timeline num">' + hist + '</ul></div></section>' : '') +
+      ((L.notes || []).length ? '<section class="sec"><h3>Notes</h3><div class="sheetcard"><ul class="notes">' + L.notes.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ul></div></section>' : '') +
+      '<section class="sec" id="dig"><h3>Dig deeper</h3><div class="sheetcard links">' +
+        '<a href="' + esc(listingUrl) + '" target="_blank" rel="noopener"><div><b>' + (L.url ? 'Open the listing on realtor.ca' : 'Find the listing on realtor.ca') + '</b><span>Photos, full description, lot size and the agent' + (L.mls && !L.sample ? ', MLS® ' + esc(L.mls) : '') + '</span></div>' + ICON.chev + '</a>' +
+        (R.url ? '<a href="' + esc(R.url) + '" target="_blank" rel="noopener"><div><b>Where the lot size came from</b><span>' + esc(R.note || R.url) + '</span></div>' + ICON.chev + '</a>' : '') +
+        '<a href="https://www.google.com/search?q=' + dig + '" target="_blank" rel="noopener"><div><b>Search the web for this address</b><span>Past listings, lot size, frontage, sale history</span></div>' + ICON.chev + '</a>' +
+        '<a href="' + mapUrl + '" target="_blank" rel="noopener"><div><b>Satellite view</b><span>The shoreline, dock and neighbours</span></div>' + ICON.chev + '</a>' +
+        (/haliburton|minden|dysart|highlands east|algonquin highlands/i.test((L.town || '') + ' ' + (L.address || '')) || /Haliburton/.test(L.lotSrc || '') ? '<a href="https://gis.haliburtoncounty.ca/" target="_blank" rel="noopener"><div><b>Haliburton County lot lines</b><span>The county map the frontage was measured from</span></div>' + ICON.chev + '</a>' : '') +
+      '</div></section>' +
+      '<button class="del" id="delBtn" type="button">Remove this listing</button>' +
+    '</div>';
+  $('sheet').classList.add('open'); $('sheet').scrollTop = 0; document.body.style.overflow = 'hidden';
+  $('closeBtn').onclick = closeReport;
+  $('digJump').onclick = function (e) { e.preventDefault(); $('dig').scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+  $('delBtn').onclick = function () { $('delBtn').textContent = 'Removing…'; google.script.run.withSuccessHandler(function (d) { DATA = d; closeReport(); render(); }).removeListing(key); };
+  var fill = function (src) { var h = $('heroImg'); if (h) h.innerHTML = '<img alt="Satellite view of the property" src="' + src + '">'; };
+  if (BIG[key]) fill(BIG[key]); else if (IMG[key]) fill(IMG[key]);
+  if (!BIG[key] && L.lat && window.google && google.script) google.script.run.withSuccessHandler(function (r) { if (r && r[key]) { BIG[key] = r[key]; fill(r[key]); } }).getImages([key], true);
+  $('closeBtn').focus();
+}
+function closeReport() { $('sheet').classList.remove('open'); document.body.style.overflow = ''; }
+function showView(v) {
+  ['list', 'add', 'crit'].forEach(function (x) { $('v-' + x).classList.toggle('hidden', x !== v); });
+  document.querySelectorAll('nav.tabs button').forEach(function (b) { b.classList.toggle('on', b.dataset.v === v); });
+  window.scrollTo(0, v === 'list' ? 0 : document.querySelector('main').offsetTop - 10);
+}
+document.addEventListener('click', function (e) {
+  var c = e.target.closest('.card[data-key]'); if (c) { openReport(c.dataset.key); return; }
+  var s = e.target.closest('.stat'); if (s) { FILTER = s.dataset.f; showView('list'); render(); return; }
+  var n = e.target.closest('nav.tabs button'); if (n) showView(n.dataset.v);
+});
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeReport(); });
+$('sortBy').onchange = render;
+$('checkBtn').onclick = function () {
+  var b = $('checkBtn'); b.disabled = true; b.querySelector('svg').classList.add('spin'); b.querySelector('span').textContent = 'Checking';
+  google.script.run.withSuccessHandler(function (d) { DATA = d; render(); b.disabled = false; b.querySelector('svg').classList.remove('spin'); b.querySelector('span').textContent = 'Check now'; })
+    .withFailureHandler(function () { b.disabled = false; b.querySelector('svg').classList.remove('spin'); b.querySelector('span').textContent = 'Try again'; }).checkNow();
+};
+$('addBtn').onclick = function () {
+  var text = $('pasteBox').value.trim();
+  if (text.length < 20) { $('addMsg').textContent = 'Paste the listing details first.'; return; }
+  $('addMsg').textContent = 'Checking. Looking up drive times, the lake and wetlands takes about 20 seconds.';
+  google.script.run.withSuccessHandler(function (d) { DATA = d; $('pasteBox').value = ''; $('addMsg').textContent = 'Checked. It\'s in your listings.'; render(); })
+    .withFailureHandler(function (err) { $('addMsg').textContent = err.message; }).addListingText(text);
+};
+$('clearBtn').onclick = function () { $('pasteBox').value = ''; $('addMsg').textContent = ''; };
+$('saveCrit').onclick = function () {
+  var c = {}; CRIT.forEach(function (k) { if ($(k)) c[k] = $(k).value; });
+  $('critMsg').textContent = 'Saving and re-checking every listing.';
+  google.script.run.withSuccessHandler(function (d) { DATA = d; render(); $('critMsg').textContent = 'Saved. Every listing has been re-checked.'; })
+    .withFailureHandler(function (err) { $('critMsg').textContent = err.message; }).saveCriteria(c);
+};
+boot();
+</script>
+</body>
+</html>
