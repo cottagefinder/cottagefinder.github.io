@@ -542,7 +542,7 @@ function card(L) {
   var ski = L.hills && L.hills[0], W = L.waterInfo || {};
   var spec = function (v, k) { return '<div><b>' + v + '</b><span>' + k + '</span></div>'; };
   return '<button class="card ' + L.verdict + (L.gold ? ' gold' : '') + '" data-key="' + esc(L.key) + '" type="button"' + (L.gold ? ' aria-label="Gold mine: ' + esc(L.address || 'listing') + '"' : '') + '>' +
-    '<div class="photo" data-img="' + esc(L.key) + '">' + (L.photo ? '<img alt="" referrerpolicy="no-referrer" src="' + esc(L.photo) + '">' : IMG[L.key] ? '<img alt="" src="' + IMG[L.key] + '">' : '') +
+    '<div class="photo" data-img="' + esc(L.key) + '">' + (L.photo ? '<img alt="" referrerpolicy="no-referrer" src="' + esc(photoUrl(L.photo)) + '">' : IMG[L.key] ? '<img alt="" src="' + IMG[L.key] + '">' : '') +
       (isNew(L) ? '<span class="pill new">New</span>' : '') + scoreBadge(L) + (L.gold ? goldLabel() : '') + '</div>' +
     '<div class="body"><h3 class="addr">' + esc(L.address || 'Address not found') + '</h3>' +
       '<div class="place">' + esc(place(L)) + '</div>' +
@@ -568,6 +568,7 @@ function sorted(list) {
 }
 function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
 /* Red number bubbles on the group buttons: listings that arrived in (or moved into) a group and haven't been opened on this device since. */
+function photoUrl(u) { var m = String(u || '').match(/^https:\/\/www\.google\.com\/url\?q=([^&]+)/i); return m ? decodeURIComponent(m[1]) : String(u || ''); }
 function inSec(x, f) { return f === 'top' ? x.verdict !== 'fail' : x.verdict === f; }
 function secSig(L) { return ['top', 'ok', 'fail'].filter(function (f) { return inSec(L, f); }).join(','); }
 function ackMap() { try { return JSON.parse(localStorage.getItem('cfAck') || 'null'); } catch (e) { return null; } }
@@ -702,7 +703,7 @@ function openReport(key) {
   $('digJump').onclick = function (e) { e.preventDefault(); $('dig').scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   $('delBtn').onclick = function () { $('delBtn').textContent = 'Removing…'; google.script.run.withSuccessHandler(function (d) { DATA = d; closeReport(); render(); }).removeListing(key); };
   var fill = function (src) { var h = $('heroImg'); if (h) h.innerHTML = '<img alt="Satellite view of the property" src="' + src + '">'; };
-  if (L.photo) { var hh = $('heroImg'); if (hh) hh.innerHTML = '<img alt="Listing photo" referrerpolicy="no-referrer" src="' + esc(L.photo) + '">'; }
+  if (L.photo) { var hh = $('heroImg'); if (hh) hh.innerHTML = '<img alt="Listing photo" referrerpolicy="no-referrer" src="' + esc(photoUrl(L.photo)) + '">'; }
   else if (BIG[key]) fill(BIG[key]); else if (IMG[key]) fill(IMG[key]);
   if (!L.photo && !BIG[key] && L.lat && window.google && google.script) google.script.run.withSuccessHandler(function (r) { if (r && r[key]) { BIG[key] = r[key]; fill(r[key]); } }).getImages([key], true);
   $('closeBtn').focus();
