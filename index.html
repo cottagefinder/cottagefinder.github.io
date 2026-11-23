@@ -88,6 +88,10 @@ a { color: inherit; }
 .photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,22,19,.28) 0%, rgba(10,22,19,0) 32%, rgba(10,22,19,0) 62%, rgba(10,22,19,.5) 100%); }
 .pill { position: absolute; z-index: 1; display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: rgba(238,242,245,.92); color: #0b1620; backdrop-filter: blur(6px); }
 .pill.new { left: 12px; top: 12px; }
+.pill.edit { left: 12px; bottom: 12px; background: rgba(255,214,140,.95); }
+.photonote { margin-top: 10px; padding: 10px 14px; border-radius: var(--r-md); background: var(--surface); border: 1px solid var(--line); font-size: 13.5px; color: var(--muted); }
+.photonote.warn { border-left: 3px solid var(--warn); color: var(--ink); }
+.photonote b { color: var(--ink); font-weight: 600; }
 .score { position: absolute; z-index: 1; right: 12px; top: 12px; width: 46px; height: 46px; }
 .score svg { width: 46px; height: 46px; transform: rotate(-90deg); display: block; }
 .score span { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--serif); font-size: 17px; font-weight: 500; color: #fff; }
@@ -617,12 +621,13 @@ function etDay(d) { return new Date(d).toLocaleDateString('en-CA', { timeZone: '
 function isNew(L) { return !!L.firstSeen && etDay(L.firstSeen) === etDay(Date.now()); }
 var SHOWN_DAY = etDay(Date.now());
 setInterval(function () { var d = etDay(Date.now()); if (d !== SHOWN_DAY) { SHOWN_DAY = d; try { render(); } catch (e) {} } }, 60000);
+function photosEdited(L) { return (L.notes || []).some(function (n) { return /^Photos may be edited/.test(n); }); }
 function card(L) {
   var ski = L.hills && L.hills[0], W = L.waterInfo || {};
   var spec = function (v, k) { return '<div><b>' + v + '</b><span>' + k + '</span></div>'; };
   return '<button class="card ' + L.verdict + (L.gold ? ' gold' : '') + '" data-key="' + esc(L.key) + '" type="button"' + (L.gold ? ' aria-label="Gold mine: ' + esc(L.address || 'listing') + '"' : '') + '>' +
     '<div class="photo" data-img="' + esc(L.key) + '">' + (L.photo ? '<img alt="" referrerpolicy="no-referrer" src="' + esc(photoUrl(L.photo)) + '">' : IMG[L.key] ? '<img alt="" src="' + IMG[L.key] + '">' : '') +
-      (isNew(L) ? '<span class="pill new">New</span>' : '') + scoreBadge(L) + (L.gold ? goldLabel() : '') + '</div>' +
+      (isNew(L) ? '<span class="pill new">New</span>' : '') + (photosEdited(L) ? '<span class="pill edit">⚠ Photos may be edited</span>' : '') + scoreBadge(L) + (L.gold ? goldLabel() : '') + '</div>' +
     '<div class="body"><h3 class="addr">' + esc(L.address || 'Address not found') + '</h3>' +
       '<div class="place">' + esc(place(L)) + '</div>' +
       (addedET(L) ? '<div class="added num">' + esc(addedET(L)) + '</div>' : '') +
@@ -738,6 +743,8 @@ function openReport(key) {
       '<div class="title"><div class="wrap"><div>' + (L.gold ? goldLabel() : '') + '<h2>' + esc(L.address || 'Listing') + '</h2><div class="where num">' + esc(place(L)) + (L.price ? (place(L) ? ', ' : '') + money(L.price) : '') + '</div>' + (addedET(L) ? '<div class="added num">' + esc(addedET(L)) + '</div>' : '') + '</div>' + scoreBadge(L) + '</div></div></div>' +
     '<div class="wrap report">' +
       '<div class="verdict ' + (L.gold ? 'gold' : L.verdict) + '">' + vText + '</div>' +
+      (photosEdited(L) ? '<div class="photonote warn"><b>⚠ Photos may be edited.</b> The listing says some photos are virtually staged, digitally enhanced or drawings. Trust the satellite view for the shoreline, beach and trees.</div>'
+        : L.photo ? '<div class="photonote">Listing photos are often touched up (bluer sky and water, greener grass). Check <b>Satellite</b> to see the real shoreline and trees.</div>' : '') +
       '<div class="acts">' +
         '<a href="' + esc(listingUrl) + '" target="_blank" rel="noopener">' + ICON.listing + 'Listing</a>' +
         '<a href="#dig" id="digJump">' + ICON.search + 'Dig deeper</a>' +
