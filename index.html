@@ -133,6 +133,14 @@ textarea { width: 100%; min-height: 180px; padding: 14px; border: 1px solid var(
 .btn.ghost { background: transparent; color: var(--ink); border-color: var(--line-2); }
 .btns { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
 .msg { margin-top: 12px; font-size: 14px; color: var(--muted); }
+.panel h3.sub { font-family: var(--serif); font-weight: 500; font-size: 19px; margin: 26px 0 10px; }
+.panel .steps { display: grid; gap: 14px; }
+@media (min-width: 640px) { .panel .steps { grid-template-columns: 1fr 1fr; } }
+.panel .steps > div { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-md); padding: 14px 16px; font-size: 14px; }
+.panel .steps ol { margin: 8px 0 0; padding-left: 20px; color: var(--muted); display: grid; gap: 6px; }
+.panel .steps ol b, .panel .use b { color: var(--ink); font-weight: 600; }
+.panel .use { color: var(--muted); font-size: 14px; margin: 14px 0 14px; max-width: 60ch; }
+.panel textarea.code { min-height: 0; height: auto; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--muted); margin-top: 12px; }
 .group { font-family: var(--serif); font-size: 18px; margin: 22px 0 4px; }
 .group:first-of-type { margin-top: 6px; }
 .field { display: grid; grid-template-columns: 1fr 132px; gap: 14px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line); }
@@ -391,8 +399,32 @@ document.querySelector('header.top').insertAdjacentHTML('afterbegin', drawScene(
   </section>
 
   <section id="v-add" class="panel hidden">
-    <h2>Add listing details</h2>
-    <p>Copy the details from a listing (lot size, frontage, description) and paste them here. If the listing is already in your list, the details are added and it's re-checked. Otherwise it's added as a new listing.</p>
+    <h2>Add a listing</h2>
+    <p>Send any realtor.ca listing to Cottage Finder in one tap. The app reads the lot size, frontage, road access and description, checks it against your criteria and opens its report.</p>
+    <h3 class="sub">Set up the Send button once</h3>
+    <div class="steps">
+      <div><b>iPhone (Safari)</b>
+        <ol>
+          <li>Tap <b>Copy button code</b> below.</li>
+          <li>In Safari, tap <b>Share</b>, then <b>Add Bookmark</b>. Name it <b>Send to Cottage Finder</b> and save.</li>
+          <li>Open your bookmarks, tap <b>Edit</b>, tap the new bookmark, clear its address and paste the code. Tap Done.</li>
+        </ol>
+      </div>
+      <div><b>Computer (Chrome, Edge or Safari)</b>
+        <ol>
+          <li>Click <b>Copy button code</b> below.</li>
+          <li>Right-click the bookmarks bar and choose <b>Add page</b> (or Add bookmark).</li>
+          <li>Name it <b>Send to Cottage Finder</b> and paste the code where it asks for the address (URL).</li>
+        </ol>
+      </div>
+    </div>
+    <p class="use"><b>To use it:</b> open a listing on realtor.ca and tap the bookmark. On iPhone, tap the address bar, type <b>Send</b> and pick it. Cottage Finder opens and adds the listing in about 20 seconds.</p>
+    <div class="btns"><button class="btn" id="copyBm" type="button">Copy button code</button></div>
+    <label for="bmCode" class="sr">Button code</label>
+    <textarea id="bmCode" class="code" readonly rows="3">javascript:(function(){var t=document.body.innerText||'',i=t.indexOf('Data provided by');if(i>0)t=t.slice(0,i);t=location.href.split('?')[0]+'\n'+t.slice(0,7000);location.href='https://cottagefinder.github.io/#send='+encodeURIComponent(t);})();</textarea>
+    <div class="msg" id="bmMsg" role="status"></div>
+    <h3 class="sub">Or paste a listing's text</h3>
+    <p>Copy the text from any listing and paste it here. If the listing is already in your list, the details are added and it's re-checked.</p>
     <label for="pasteBox" class="sr">Listing details</label>
     <textarea id="pasteBox" placeholder="Paste listing details"></textarea>
     <div class="btns"><button class="btn" id="addBtn" type="button">Check this listing</button><button class="btn ghost" id="clearBtn" type="button">Clear</button></div>
@@ -461,6 +493,25 @@ function askCode(wrong) {
   document.getElementById('gateMsg').textContent = wrong ? 'That code didn\'t work. Check it and try again.' : '';
   setTimeout(function () { document.getElementById('gateCode').focus(); }, 50);
 }
+// The Send button opens this page as #send=<listing text>; add that listing once the data has loaded.
+var PENDING = null;
+if (location.hash.indexOf('#send=') === 0) {
+  try { PENDING = decodeURIComponent(location.hash.slice(6)); } catch (e) {}
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+}
+function addFromSend(text) {
+  var ld = document.getElementById('loading'), msg = document.getElementById('loadMsg');
+  ld.hidden = false; msg.textContent = 'Adding the listing. Looking up drive times, the lake and wetlands takes about 20 seconds.';
+  api('addListingText', [text]).then(function (d) {
+    DATA = d; ld.hidden = true; render();
+    var mls = (text.match(/MLS[^A-Za-z0-9]{0,6}(?:Number|#|No\.?)?:?\s*([A-Z]?\d{6,9})/i) || [])[1];
+    var L = mls && (DATA.listings || []).filter(function (x) { return x.mls === mls; })[0];
+    if (L) openReport(L.key);
+  }, function (err) {
+    msg.textContent = 'Couldn\'t add that listing: ' + err.message;
+    setTimeout(function () { ld.hidden = true; render(); }, 4000);
+  });
+}
 function boot() {
   if (!CODE) { askCode(false); return; }
   document.getElementById('gate').hidden = true;
@@ -468,6 +519,7 @@ function boot() {
   document.getElementById('loadMsg').textContent = 'Loading the listings';
   api('getData', []).then(function (d) {
     DATA = d; document.getElementById('loading').hidden = true; render();
+    if (PENDING) { var t = PENDING; PENDING = null; addFromSend(t); }
   }, function (err) {
     if (!CODE) return;
     document.getElementById('loadMsg').textContent = 'Couldn\'t load the listings. Check your connection, then pull down to refresh.';
@@ -744,6 +796,11 @@ $('addBtn').onclick = function () {
   $('addMsg').textContent = 'Checking. Looking up drive times, the lake and wetlands takes about 20 seconds.';
   google.script.run.withSuccessHandler(function (d) { DATA = d; $('pasteBox').value = ''; $('addMsg').textContent = 'Checked. It\'s in your listings.'; render(); })
     .withFailureHandler(function (err) { $('addMsg').textContent = err.message; }).addListingText(text);
+};
+$('copyBm').onclick = function () {
+  var box = $('bmCode'), done = function () { $('bmMsg').textContent = 'Copied. Now paste it as the bookmark\'s address.'; };
+  var fallback = function () { box.focus(); box.select(); try { document.execCommand('copy'); done(); } catch (e) { $('bmMsg').textContent = 'Select the code above and copy it.'; } };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(box.value).then(done, fallback); else fallback();
 };
 $('clearBtn').onclick = function () { $('pasteBox').value = ''; $('addMsg').textContent = ''; };
 $('saveCrit').onclick = function () {
