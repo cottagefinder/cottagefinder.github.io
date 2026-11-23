@@ -408,6 +408,7 @@ document.querySelector('header.top').insertAdjacentHTML('afterbegin', drawScene(
     <h2>Add a listing</h2>
     <p>Send any realtor.ca listing to Cottage Finder in one tap. The app reads the lot size, frontage, road access and description, checks it against your criteria and opens its report.</p>
     <h3 class="sub">Set up the Send button once</h3>
+    <p class="use"><b>Set it up before Nov 23?</b> The button now brings the listing photo too. Tap <b>Copy button code</b> below, edit your Send to Cottage Finder bookmark, and replace its address (URL) with the new code.</p>
     <div class="steps">
       <div><b>iPhone (Safari)</b>
         <ol>
@@ -447,7 +448,7 @@ document.querySelector('header.top').insertAdjacentHTML('afterbegin', drawScene(
     <p class="use"><b>To use it:</b> open a listing on realtor.ca and tap the bookmark. On iPhone, tap the address bar, type <b>Send</b> and pick it. On Android, type <b>Send to</b> in Chrome's address bar and tap the starred suggestion. Cottage Finder opens and adds the listing in about 20 seconds.</p>
     <div class="btns"><button class="btn" id="copyBm" type="button">Copy button code</button></div>
     <label for="bmCode" class="sr">Button code</label>
-    <textarea id="bmCode" class="code" readonly rows="3">javascript:(function(){var t=document.body.innerText||'',i=t.indexOf('Data provided by');if(i>0)t=t.slice(0,i);t=location.href.split('?')[0]+'\n'+t.slice(0,7000);location.href='https://cottagefinder.github.io/#send='+encodeURIComponent(t);})();</textarea>
+    <textarea id="bmCode" class="code" readonly rows="3">javascript:(function(){var t=document.body.innerText||'',i=t.indexOf('Data provided by');if(i>0)t=t.slice(0,i);var m=document.querySelector('meta[property="og:image"]'),a=document.querySelector('[href*="media_link="]'),p=a?decodeURIComponent(a.getAttribute('href').split('media_link=')[1].split('&')[0]):(m?m.content:'');t=location.href.split('?')[0]+'\n'+(p?'Photo: '+p+'\n':'')+t.slice(0,6800);location.href='https://cottagefinder.github.io/#send='+encodeURIComponent(t);})();</textarea>
     <div class="msg" id="bmMsg" role="status"></div>
     <h3 class="sub">Or paste a listing's text</h3>
     <p>Copy the text from any listing and paste it here. If the listing is already in your list, the details are added and it's re-checked.</p>
